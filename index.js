@@ -2,7 +2,7 @@ const express = require('express');
 const { simulateSlowResponse, getFastResponse } = require('./utility');
 
 const app = express();
-const PORT = 3000;
+const PORT = 4000;
 
 app.use(express.json());
 
