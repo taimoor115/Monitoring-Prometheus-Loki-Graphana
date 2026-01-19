@@ -10,6 +10,9 @@ const logger = createLogger({
     transports: [
         new transports.Console(),
         new LokiTransport({
+            labels: {
+                app_name: "monitoring_app"
+            },
             host: "http://127.0.0.1:3100"
         })
     ]
