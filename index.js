@@ -70,7 +70,7 @@ app.get('/api/slow', async (req, res) => {
             timestamp: new Date().toISOString()
         });
     } catch (error) {
-        logger.error(`Error in /api/slow endpoint: ${error.message}`);
+        logger.error(`Error in /api/slow endpoint: ${error}`);
         const endTime = Date.now();
         res.status(500).json({
             status: 'error',

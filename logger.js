@@ -1,12 +1,18 @@
-const { createLogger, transports } = require("winston");
+const { createLogger, format, transports } = require("winston");
 const LokiTransport = require("winston-loki");
-const options = {
+
+const logger = createLogger({
+    level: "info",
+    format: format.combine(
+        format.timestamp(),
+        format.json()
+    ),
     transports: [
+        new transports.Console(),
         new LokiTransport({
             host: "http://127.0.0.1:3100"
         })
     ]
-};
-const logger = createLogger(options);
+});
 
-module.export = logger;
+module.exports = logger;
