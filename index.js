@@ -1,6 +1,7 @@
 const express = require('express');
 const responseTime = require('response-time');
 const { simulateSlowResponse, getFastResponse } = require('./utility');
+const logger = require('./logger');
 const client = require('prom-client');
 const app = express();
 const PORT = 8000;
@@ -29,8 +30,14 @@ const requestResponseTime = new client.Histogram({
 
 })
 
+const totalRequestCounter = new client.Counter({
+    name: "total_request_counter",
+    help: "Total number of requests received",
+    labelNames: ["method", "route", "status_code"]
+})
 
 app.use(responseTime((req, res, time) => {
+    totalRequestCounter.labels(req.method, req.path, res.statusCode).inc();
     requestResponseTime.labels(req.method, req.path, res.statusCode).observe(time);
 }))
 app.get('/metrics', async (req, res) => {
@@ -39,6 +46,7 @@ app.get('/metrics', async (req, res) => {
     res.send(metrics);
 });
 app.get('/api/fast', (req, res) => {
+    logger.info("Received request for /api/fast endpoint");
     const startTime = Date.now();
     const response = getFastResponse();
     const endTime = Date.now();
@@ -50,6 +58,8 @@ app.get('/api/fast', (req, res) => {
 });
 app.get('/api/slow', async (req, res) => {
     try {
+
+        logger.info("Received request for /api/slow endpoint");
         const startTime = Date.now();
         const result = await simulateSlowResponse();
         const endTime = Date.now();
@@ -60,6 +70,7 @@ app.get('/api/slow', async (req, res) => {
             timestamp: new Date().toISOString()
         });
     } catch (error) {
+        logger.error(`Error in /api/slow endpoint: ${error.message}`);
         const endTime = Date.now();
         res.status(500).json({
             status: 'error',
@@ -71,6 +82,7 @@ app.get('/api/slow', async (req, res) => {
 });
 
 app.get('/health', (req, res) => {
+
     res.json({ status: 'Server is running', port: PORT });
 });
 
