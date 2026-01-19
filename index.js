@@ -1,11 +1,43 @@
 const express = require('express');
+const responseTime = require('response-time');
 const { simulateSlowResponse, getFastResponse } = require('./utility');
-
+const client = require('prom-client');
 const app = express();
-const PORT = 4000;
+const PORT = 8000;
 
+
+
+const collectDefaultMetrics = client.collectDefaultMetrics;
+
+
+collectDefaultMetrics({
+    register: client.register,
+
+})
 app.use(express.json());
 
+
+
+
+
+
+const requestResponseTime = new client.Histogram({
+    name: "http_express_req_res_time",
+    help: "How much time is taken for requests",
+    labelNames: ["method", "route", "status_code"],
+    buckets: [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
+
+})
+
+
+app.use(responseTime((req, res, time) => {
+    requestResponseTime.labels(req.method, req.path, res.statusCode).observe(time);
+}))
+app.get('/metrics', async (req, res) => {
+    res.setHeader("Content-Type", client.register.contentType);
+    const metrics = await client.register.metrics();
+    res.send(metrics);
+});
 app.get('/api/fast', (req, res) => {
     const startTime = Date.now();
     const response = getFastResponse();
@@ -16,8 +48,6 @@ app.get('/api/fast', (req, res) => {
         actualResponseTime: `${endTime - startTime}ms`
     });
 });
-
-
 app.get('/api/slow', async (req, res) => {
     try {
         const startTime = Date.now();
@@ -39,7 +69,6 @@ app.get('/api/slow', async (req, res) => {
         });
     }
 });
-
 
 app.get('/health', (req, res) => {
     res.json({ status: 'Server is running', port: PORT });

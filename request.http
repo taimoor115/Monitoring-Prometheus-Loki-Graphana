@@ -1,12 +1,12 @@
 
 ### Fast API Request
-GET http://localhost:4000/api/fast
+GET http://localhost:8000/api/fast
 
 ### Slow API Request
-GET http://localhost:4000/api/slow
+GET http://localhost:8000/api/slow
 
 
 ### Health Check
-GET http://localhost:4000/health
+GET http://localhost:8000/health
 
 
